@@ -1,0 +1,17 @@
+{
+  "name": "isadb.js",
+  "version": "0.0.3-alpha",
+  "description": "Uma database perfeita para projetos de pequeno porte!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Database",
+    "DB",
+    "isadb",
+    "ISADB"
+  ],
+  "author": "Guilherme Renato",
+  "license": "MIT"
+}
