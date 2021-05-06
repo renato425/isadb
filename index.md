@@ -13,7 +13,7 @@ Todos os conteúdos serão salvos em um arquivo `db.isadb` com fácil configura�
 # Exemplos
 **Exemplo simples!**
 ```js
-const isaDB = require('isadb')
+const isaDB = require('isadb.js')
 const db = new isaDB()
 
 //adicionando comentários
