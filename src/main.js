@@ -27,7 +27,29 @@ class main {
                     if (three[k].replace('$', '') == value) {
                         try {
                         let content = newString.split('$' + three[k].replace('$', ''))
-                        return content[1].replace('[', '').replace(']', '')
+                        // return content[1].replace('[', '').replace(']', '')
+                        let newContent = content[1].replace('[', '').replace(']', '')
+                        if (newContent.includes('setArray')) {
+                            const r = newContent.split('setArray').length - 1,
+                            inside = newContent.split('setArray')[r],
+                            newArray = inside.replace('(', '').replace(')', '').split(', ') || inside.split(','),
+                            arrayReturn = []
+                            for (let i = 0; i< newArray.length; i++) {
+                                arrayReturn.push(newArray[i].replace('[', '').replace(']', ''))
+                                if (i == newArray.length - 1) {
+                                    return arrayReturn
+                                }
+                            }
+                        } else if (newContent.includes('setNumber')) {
+                            const r = newContent.split('setNumber').length - 1,
+                            inside = newContent.split('setNumber')[r],
+                            newNumber = inside.replace('(', '').replace(')', '')
+                            if (isNaN(newNumber)) throw new Error('O Valor informado não é um número!')
+                            if (newNumber.includes('.')) return parseFloat(newNumber)
+                            else return parseInt(newNumber)
+                        } else {
+                            return newContent
+                        }
                         } catch(e) {
                             return e
                         }
