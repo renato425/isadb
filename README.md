@@ -67,3 +67,42 @@ $NomeEmQuePoderáSerChamadoNoJs[ValorEmQueSeráRetornadoNoJs]
 ```js
 console.log(db.get('NomeEmQuePoderáSerChamadoNoJs'))
 ```
+
+# Setando outros valores!
+
+**Setando um array**
+
+```js
+db.set('newArray', 'setArray([Olá, Tudo bem?])')
+```
+
+
+**Setando um número**
+
+```js
+db.set('newNumber', 'setNumber(150)')
+```
+
+# arrayTransformer - Como usar
+
+**Primeiro, comece iniciando ele no seu index ou em qualquer outro arquivo**
+
+```js
+const arrayTransformer = new isadb.arrayTransformer()
+```
+
+**Depois, só usar os métodos. Essas funções são recomendadas ao usar o db normal**
+
+```js
+console.log(arrayTransformer.stringToArray('[Olá, Beleza?, Tudo bem!]')) //['Olá', 'Beleza?', 'Tudo bem!]
+console.log(arrayTransformer.arrayToString(['Olá', 'Beleza?', 'Tudo bem!'])) //[Olá, Beleza?, Tudo bem!]
+```
+
+como já indicado. Esses métodos podem ser usados no db normal.
+```js
+db.set('newArray', `setArray(${arrayTransformer.arrayToString(['Arroz', 'Feijão', 'e Batata'])})`)
+```
+
+```js
+console.log(arrayTransformer.stringToArray(db.get('newArray')))
+```
