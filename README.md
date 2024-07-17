@@ -4,7 +4,7 @@
 
 ### A new way for you to control your project data.
 
-[![npm](https://img.shields.io/badge/npm_version-v1.0.0-FF0000)](https://npmjs.com/package/isadb)  [![renatiin](https://img.shields.io/badge/maded_with_love_by-renatiin-29AB76)](https://github.com/renato425)  [![docs](https://img.shields.io/badge/docs-8A2BE)](https://isadb.js.org)
+[![npm](https://img.shields.io/badge/npm_version-v1.0.2-FF0000)](https://npmjs.com/package/isadb)  [![renatiin](https://img.shields.io/badge/maded_with_love_by-renatiin-29AB76)](https://github.com/renato425)  [![docs](https://img.shields.io/badge/docs-8A2BE)](https://isadb.js.org)
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/renatiin)
 
