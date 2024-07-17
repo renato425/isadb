@@ -1,6 +1,4 @@
-'use strict'
 const fs = require('fs');
-const path = require('path');
 
 /**
  * Parses the content of an array string and returns an array of items
@@ -270,14 +268,14 @@ class Instance {
      */
     constructor(fileName) {
         if (fileName !== undefined && fileName !== null) {
-            if (fs.existsSync(path.join(__dirname, fileName.replace('.isadb', '') + '.isadb'))) {
+            if (fs.existsSync(fileName.replace('.isadb', '') + '.isadb')) {
                 this.fileName = fileName.replace('.isadb', '') + '.isadb';
             } else {
                 fs.writeFileSync(fileName.replace('.isadb', '') + '.isadb', '');
                 this.fileName = fileName.replace('.isadb', '') + '.isadb';
             }
         } else {
-            if (fs.existsSync(path.join(__dirname, 'db.isadb'))) {
+            if (fs.existsSync('db.isadb')) {
                 this.fileName = 'db.isadb';
                 return;
             }
