@@ -1,17 +1,34 @@
 {
-  "name": "isadb.js",
-  "version": "0.0.3-alpha",
-  "description": "Uma database perfeita para projetos de pequeno porte!",
+  "name": "isadb",
+  "version": "1.0.0",
+  "author": "Renato <contatoclash6@gmail.com>",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "exports": {
+    "import": "./index.js"
   },
+  "scripts": {
+    "testTs": "tsc ./test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renato425/isadb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/renato425/isadb/issues",
+    "email": "contatoclash6@gmail.com"
+  },
+  "description": "A new way for you to control your project data.",
+  "homepage": "https://isadb.js.org",
   "keywords": [
-    "Database",
-    "DB",
+    "database",
+    "db",
     "isadb",
-    "ISADB"
+    "local",
+    "localdb",
+    "isadb2",
+    ".isadb2",
+    ".isadb"
   ],
-  "author": "Guilherme Renato",
-  "license": "MIT"
+  "license": "MIT",
+  "types": "./index.d.ts"
 }
