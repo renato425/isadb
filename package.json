@@ -1,17 +1,15 @@
 {
   "name": "isadb",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": "Renato <contatoclash6@gmail.com>",
-  "main": "index.js",
-  "exports": {
-    "import": "./index.js"
-  },
-  "scripts": {
-    "testTs": "tsc ./test.ts"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/renato425/isadb.git"
+  },
+  "main": "index.js",
+  "exports": {
+    "require": "./index.js",
+    "import": "./index.mjs"
   },
   "bugs": {
     "url": "https://github.com/renato425/isadb/issues",
@@ -30,5 +28,8 @@
     ".isadb"
   ],
   "license": "MIT",
+  "scripts": {
+    "testTs": "tsc ./test.ts"
+  },
   "types": "./index.d.ts"
 }
