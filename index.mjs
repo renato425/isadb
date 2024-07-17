@@ -1,13 +1,13 @@
-import * as fs from 'fs'
+import * as fs from 'fs';
 
 /**
  * Parses the content of an array string and returns an array of items
  * 
- * @param {string} arrayString - A string representando o array
- * @returns {Array} - Um array de itens
+ * @param {string} arrayString - A string representing the array
+ * @returns {Array<string>} - An array of items
  */
-function arrayContent(arrayString) {
-    const items = [];
+function arrayContent(arrayString: string): string {
+    const items: string[] = [];
     let currentItem = '';
     let inString = false;
     let stringChar = '';
@@ -46,37 +46,36 @@ function arrayContent(arrayString) {
     }
 
     return items.map(item => {
-        if (item.startsWith('Object(') && item.endsWith(')')) {
-            return JSON.parse(item.slice(7, -1).replace(/(\w+):/g, '"$1":').replace(/'/g, '"'));
-        } else if (!item.startsWith('Object(') && !item.startsWith('Array(') && isNaN(item) && item !== 'true' && item !== 'false' && !item.startsWith('"') && !item.startsWith("'")) {
-            item = '${item}';
+        if (!item.startsWith('Object(') && !item.startsWith('Array(') && isNaN(Number(item)) && item !== 'true' && item !== 'false' && !item.startsWith('"') && !item.startsWith("'")) {
+            item = `\${item}`;
         }
         return item;
-    });
+    }).join(',');
 }
 
 /**
- * Classe Parser para analisar arquivos .isadb.
+ * Parser class for analyzing .isadb files.
  */
 class Parser {
-    /**
-     * Cria uma instância de Parser
-     * 
-     * @param {string} fileName - O nome do arquivo a ser analisado. 
-     */
-    constructor(fileName) {
-        let content = fs.readFileSync(fileName, 'utf-8');
+    private lines: string[];
+    public db: { [key: string]: any } = {};
 
-        const lines = content.split('\n');
-        this.lines = lines;
+    /**
+     * Creates an instance of Parser
+     * 
+     * @param {string} fileName - The name of the file to be analyzed.
+     */
+    constructor(fileName: string) {
+        const content = fs.readFileSync(fileName, 'utf-8');
+        this.lines = content.split('\n');
     }
 
     /**
-     * It analyzes the database file and returns the analyzed database object.
+     * Analyzes the database file and returns the parsed database object.
      * 
-     * @returns {object} - The object of the database analyzed.
+     * @returns {object} - The parsed database object.
      */
-    databaseFile() {
+    databaseFile(): { [key: string]: any } {
         let inBlockComment = false;
         this.db = {};
         this.lines.forEach(line => {
@@ -108,7 +107,7 @@ class Parser {
                         const parsedObject = JSON.parse(objectString.replace(/(\w+):/g, '"$1":').replace(/'/g, '"'));
                         this.db[variableName] = parsedObject;
                     } catch (e) {
-                        console.error('[IsaDB] Erro ao avaliar objeto:', variableName, e);
+                        console.error('[IsaDB] Error evaluating object:', variableName, e);
                     }
                 } else if (variableValue.startsWith('Number(') && variableValue.endsWith(')')) {
                     this.db[variableName] = Number(variableValue.slice(7, -1));
@@ -116,10 +115,10 @@ class Parser {
                     this.db[variableName] = variableValue.slice(8, -1) === 'true';
                 } else if (variableValue.startsWith('Array(') && variableValue.endsWith(')')) {
                     try {
-                        let arrayContententer = arrayContent(variableValue.slice(6, -1))
-                        this.db[variableName] = arrayContententer;
+                        const arrayContentDone = arrayContent(variableValue.slice(6, -1));
+                        this.db[variableName] = JSON.parse(`[${arrayContentDone}]`);
                     } catch (e) {
-                        console.error(`[IsaDB] Erro ao avaliar array: ${variableName}`, e);
+                        console.error(`[IsaDB] Error evaluating array: ${variableName}`, e);
                     }
                 } else {
                     this.db[variableName] = variableValue.replace(/"/g, '').replace(/'/g, '');
@@ -134,61 +133,65 @@ class Parser {
  * Represents a value within a database instance.
  */
 class InstanceValue {
+    instance: Instance;
+    key: string;
+    value: any;
+
     /**
-     * Cria um InstanceValue
+     * Creates an instance of InstanceValue
      * 
-     * @param {Instance} instance - A instância do banco de dados. 
-     * @param {string} key - A chave do valor
-     * @param {*} value - O valor
+     * @param {Instance} instance - The database instance. 
+     * @param {string} key - The key of the value
+     * @param {*} value - The value 
      */
-    constructor(instance, key, value) {
+    constructor(instance: Instance, key: string, value: any) {
         this.instance = instance;
         this.key = key;
-        this.value = value
+        this.value = value;
     }
 
     /**
-     * Obtém um valor subKey.
+     * Gets a sub-key value.
      * 
-     * @param {string} subKey - A subKey para obter o valor.
-     * @returns {*} - O valor da subKey.
+     * @param {string} subKey - The sub-key to get the value. 
+     * @returns {*} - The value of the sub-key. 
      */
-    get(subKey) {
-        return this.instance.get(`${this.key}.${subKey}`);
+    get(subKey: string): any {
+        return this.instance.set(`${this.key}.${subKey}`, this.value);
     }
 
     /**
-     * Define um valor subKey.
+     * Sets a sub-key value.
      * 
-     * @param {string} subKey - A subKey para definir o valor.
-     * @param {*} value - O valor a ser definido.
-     * @returns {*} - O valor atualizado.
+     * @param {string} subKey - The sub-key to set the value. 
+     * @param {*} value - The value to set.
+     * @returns {*} - The updated value.
      */
-    set(subKey, value) {
+    set(subKey: string, value: any): any {
         if (value) {
             return this.instance.set(`${this.key}.${subKey}`, value);
         } else {
             return this.instance.set(`${this.key}`, value);
         }
     }
-    
+
     /**
-     * Verifica se uma subKey existe.
+     * Checks if a sub-key exists.
      * 
-     * @param {string} subKey - A subKey para verificar a existência. 
-     * @returns {boolean} - True se a subKey existir, caso contrário false.
+     * @param {string} subKey - The sub-key to check existence. 
+     * @returns {boolean} - True if the sub-key exists, false otherwise.
      */
-    has(subKey) {
+    has(subKey: string): boolean {
         return this.instance.has(`${this.key}.${subKey}`);
     }
 
     /**
-     * Remove uma subKey.
+     * Removes a sub-key.
      * 
-     * @param {string} subKey - A subKey a ser removida. 
-     * @returns {boolean} - True se a subKey for removida, caso contrário false.
+     * @param {string} subKey - The sub-key to be removed. 
+     * @returns {boolean} - True if the sub-key is removed, false otherwise.
      */
-    remove(subKey) {
+    remove(subKey: string): boolean {
         if (subKey) {
             return this.instance.remove(`${this.key}.${subKey}`);
         } else {
@@ -198,75 +201,77 @@ class InstanceValue {
 
     number = {
         /**
-         * Adiciona um valor ao número atual.
+         * Adds a value to the current number.
          * 
-         * @param {number} value - O valor a ser adicionado. 
+         * @param {number} value - The value to add. 
          * @returns {void}
          */
-        add: (value) => {
+        add: (value: number) => {
             return this.instance.number.add(this.key, value);
         },
         /**
-         * Subtrai um valor do número atual.
+         * Subtracts a value from the current number.
          * 
-         * @param {number} value - O valor a ser subtraído.
+         * @param {number} value - The value to subtract.
          * @returns {void}
          */
-        sub: (value) => {
+        sub: (value: number) => {
             return this.instance.number.sub(this.key, value);
         },
         /**
-         * Multiplica o número atual por um valor.
+         * Multiplies the current number by a value.
          * 
-         * @param {number} value - O valor a ser multiplicado.
+         * @param {number} value - The value to multiply.
          * @returns {void}
          */
-        multiply: (value) => {
+        multiply: (value: number) => {
             return this.instance.number.multiply(this.key, value);
         },
         /**
-         * Divide o número atual por um valor.
+         * Divides the current number by a value.
          * 
-         * @param {number} value - O valor a ser dividido. 
+         * @param {number} value - The value to divide. 
          * @returns {void}
          */
-        divide: (value) => {
+        divide: (value: number) => {
             return this.instance.number.divide(this.key, value);
         }
     }
 
     array = {
         /**
-         * Verifica se um valor existe no array.
+         * Checks if a value exists in the array.
          * 
-         * @param {*} value - O valor a ser verificado.  
-         * @returns {boolean} - True se o valor existir no array, caso contrário false.
+         * @param {*} value - The value to check.  
+         * @returns {boolean} - True if the value exists in the array, false otherwise.
          */
-        has: (value) => {
+        has: (value: any) => {
             return this.instance.array.has(this.key, value);
         },
         /**
-         * Adiciona um valor ao array.
+         * Adds a value to the array.
          * 
-         * @param {*} value - O valor a ser adicionado.
+         * @param {*} value - The value to add.
          * @returns {void}
          */
-        push: (...value) => {
+        push: (...value: any[]) => {
             return this.instance.array.push(this.key, ...value);
         }
     }
 }
 
 /**
- * Representa uma instância do banco de dados.
+ * Represents a database instance.
  */
 class Instance {
+    fileName: string;
+
     /**
-     * Cria uma instância.
+     * Creates an instance.
      * 
-     * @param {string} fileName - O nome do arquivo do banco de dados.
+     * @param {string} [fileName] - The name of the database file.
      */
-    constructor(fileName) {
+    constructor(fileName?: string) {
         if (fileName !== undefined && fileName !== null) {
             if (fs.existsSync(fileName.replace('.isadb', '') + '.isadb')) {
                 this.fileName = fileName.replace('.isadb', '') + '.isadb';
@@ -276,215 +281,189 @@ class Instance {
             }
         } else {
             if (fs.existsSync('db.isadb')) {
-                this.fileName = 'db.isadb';
-                return;
+                this.fileName = 'db.isadb'
+                return
             }
-            fs.writeFileSync('db.isadb', '');
-            this.fileName = 'db.isadb';
+            fs.writeFileSync('db.isadb', '')
+            this.fileName = 'db.isadb'
         }
     }
 
     /**
-     * Obtém todo o banco de dados.
+     * Gets all the values from the instance.
      * 
-     * @returns {object | void} - O objeto do banco de dados, se existir.
+     * @returns {object} - An object containing all the values of the instance.
      */
-    all() {
-        const parser = new Parser(this.fileName).databaseFile();
-        return parser;
+
+    all(): { [key: string]: any } {
+        const db = new Parser(path.join(__dirname, this.fileName)).databaseFile()
+        return db
     }
 
     /**
-     * Obtém uma propriedade do banco de dados.
+     * Sets a value for a key.
      * 
-     * @param {string} propertyName - O nome da propriedade
-     * @returns {InstanceValue | undefined} - Funções para manipular o valor retornado, ou undefined se não existir.
+     * @param {string} key - The key to set the value. 
+     * @param {*} value - The value to set.
+     * @returns {*} - The value set.
      */
-    get(propertyName) {
-        const keys = propertyName.replace(/\[(\w+)\]/g, '.$1').split('.');
-        let value = new Parser(this.fileName).databaseFile();
-        
-        for (const k of keys) {
-            if (value && typeof value === 'object' && k in value) {
-                value = value[k];
+    set(key: string, value: any): any {
+        const parser = new Parser(this.fileName);
+        parser.databaseFile();
+        parser.db[key] = value;
+        this.write(parser.db);
+        return parser.db[key];
+    }
+
+    /**
+     * Checks if a key exists.
+     * 
+     * @param {string} key - The key to check existence.
+     * @returns {boolean} - True if the key exists, false otherwise.
+     */
+    has(key: string): boolean {
+        const parser = new Parser(this.fileName);
+        parser.databaseFile();
+        return parser.db[key] !== undefined;
+    }
+
+    /**
+     * Removes a key.
+     * 
+     * @param {string} key - The key to be removed. 
+     * @returns {boolean} - True if the key is removed, false otherwise.
+     */
+    remove(key: string): boolean {
+        const parser = new Parser(this.fileName);
+        parser.databaseFile();
+        delete parser.db[key];
+        this.write(parser.db);
+        return !parser.db[key];
+    }
+
+    /**
+     * Writes the database object to the file.
+     * 
+     * @param {object} db - The database object to write.
+     */
+    private write(db: { [key: string]: any }): void {
+        const data = Object.entries(db).map(([key, value]) => {
+            if (typeof value === 'object') {
+                return `\$${key}[${JSON.stringify(value)}]`;
             } else {
-                return undefined;
+                return `\$${key}[${value}]`;
             }
-        }
+        }).join('\n');
 
-        return new InstanceValue(this, propertyName, value);
-    }
-
-    /**
-     * Função para escrever no banco de dados. Não é necessário escrever dentro do seu código.
-     * 
-     * @param {object} db - O banco de dados inteiro.
-     */
-    _writeDb(db) {
-        let content = '';
-        for (const [key, value] of Object.entries(db)) {
-            if (typeof value === 'object' && !Array.isArray(value)) {
-                content += `$${key}[Object(${JSON.stringify(value).replace(/"([^"]+)":/g, '$1:').replace(/"/g, "'")})]\n`;
-            } else if (Array.isArray(value)) {
-                content += `$${key}[Array(${value.map(v => {
-                    if (typeof v === 'object') return `Object(${JSON.stringify(v).replace(/"([^"]+)":/g, '$1:').replace(/"/g, "'")})`;
-                    return JSON.stringify(v);
-                }).join(', ')})]\n`;
-            } else if (typeof value === 'number') {
-                content += `$${key}[Number(${value})]\n`;
-            } else if (typeof value === 'boolean') {
-                content += `$${key}[Boolean(${value})]\n`;
-            } else {
-                content += `$${key}[${value}]\n`;
-            }
-        }
-
-        fs.writeFileSync(this.fileName, content);
-    }
-
-    /**
-     * Salva uma nova propriedade no banco de dados.
-     * 
-     * @param {string} propertyName - O nome da propriedade a ser salva.
-     * @param {*} value - O valor dessa propriedade.
-     */
-    set(propertyName, value) {
-        const keys = propertyName.replace(/\[(\w+)\]/g, '.$1').split('.');
-        let db = new Parser(this.fileName).databaseFile();
-        let obj = db;
-
-        for (let i = 0; i < keys.length - 1; i++) {
-            if (!obj[keys[i]]) {
-                obj[keys[i]] = {};
-            }
-            obj = obj[keys[i]];
-        }
-
-        obj[keys[keys.length - 1]] = value;
-
-        this._writeDb(db);
-    }
-
-    /**
-     * Verifica se a propriedade existe.
-     * 
-     * @param {string} propertyName - O nome da propriedade a ser verificada.
-     * @returns {boolean} - True se a propriedade existir no banco de dados, caso contrário false.
-     */
-    has(propertyName) {
-        const keys = propertyName.replace(/\[(\w+)\]/g, '.$1').split('.');
-        let value = new Parser(this.fileName).databaseFile();
-
-        for (const k of keys) {
-            if (value && typeof value === 'object' && k in value) {
-                value = value[k];
-            } else {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Remove uma propriedade do banco de dados.
-     * 
-     * @param {string} propertyName - O nome da propriedade a ser removida.
-     * @returns {boolean} - True se a propriedade for removida, caso contrário false.
-     */
-    remove(propertyName) {
-        const keys = propertyName.replace(/\[(\w+)\]/g, '.$1').split('.');
-        let db = new Parser(this.fileName).databaseFile();
-        let obj = db;
-
-        for (let i = 0; i < keys.length - 1; i++) {
-            if (!obj[keys[i]]) return;
-            obj = obj[keys[i]];
-        }
-        delete obj[keys[keys.length - 1]];
-
-        this._writeDb(db);
-        return true;
-    }
-
-    array = {
-        /**
-         * Verifica se um valor existe no array.
-         * 
-         * @param {string} propertyName - O nome da propriedade a ser modificada
-         * @param {*} value - O valor a ser verificado.  
-         * @returns {boolean} - True se o valor existir no array, caso contrário false.
-         */
-        has: (propertyName, value) => {
-            const array = this.get(propertyName).value;
-            if (!Array.isArray(array)) return false;
-            return array.includes(value);
-        },
-        /**
-         * Adiciona um valor ao array.
-         * 
-         * @param {string} propertyName - O nome da propriedade a ser modificada
-         * @param {*} value - O valor a ser adicionado.
-         * @returns {void}
-         */
-        push: (propertyName, ...value) => {
-            const array = this.get(propertyName).value;
-            if (!Array.isArray(array)) return;
-            array.push(...value);
-            this.set(propertyName, array);
-        }
+        fs.writeFileSync(this.fileName, data);
     }
 
     number = {
         /**
-         * Adiciona um valor ao número atual.
+         * Adds a value to the current number.
          * 
-         * @param {string} propertyName - O nome da propriedade a ser modificada
-         * @param {number} value - O valor a ser adicionado. 
+         * @param {string} key - The key of the number. 
+         * @param {number} value - The value to add.
          * @returns {void}
          */
-        add: (propertyName, value) => {
-            const num = this.get(propertyName).value;
-            if (typeof num !== 'number' || typeof value !== 'number') return;
-            this.set(propertyName, num + value);
+        add: (key: string, value: number) => {
+            const currentValue = this.get(key);
+            if (typeof currentValue === 'number') {
+                this.set(key, currentValue + value);
+            }
         },
         /**
-         * Subtrai um valor do número atual.
+         * Subtracts a value from the current number.
          * 
-         * @param {string} propertyName - O nome da propriedade a ser modificada
-         * @param {number} value - O valor a ser subtraído.
+         * @param {string} key - The key of the number. 
+         * @param {number} value - The value to subtract.
          * @returns {void}
          */
-        sub: (propertyName, value) => {
-            const num = this.get(propertyName).value;
-            if (typeof num !== 'number' || typeof value !== 'number') return;
-            this.set(propertyName, num - value);
+        sub: (key: string, value: number) => {
+            const currentValue = this.get(key);
+            if (typeof currentValue === 'number') {
+                this.set(key, currentValue - value);
+            }
         },
         /**
-         * Multiplica o número atual por um valor.
+         * Multiplies the current number by a value.
          * 
-         * @param {string} propertyName - O nome da propriedade a ser modificada
-         * @param {number} value - O valor a ser multiplicado.
+         * @param {string} key - The key of the number. 
+         * @param {number} value - The value to multiply.
          * @returns {void}
          */
-        multiply: (propertyName, value) => {
-            const num = this.get(propertyName).value;
-            if (typeof num !== 'number' || typeof value !== 'number') return;
-            this.set(propertyName, num * value);
+        multiply: (key: string, value: number) => {
+            const currentValue = this.get(key);
+            if (typeof currentValue === 'number') {
+                this.set(key, currentValue * value);
+            }
         },
         /**
-         * Divide o número atual por um valor.
+         * Divides the current number by a value.
          * 
-         * @param {string} propertyName - O nome da propriedade a ser modificada
-         * @param {number} value - O valor a ser dividido.
+         * @param {string} key - The key of the number. 
+         * @param {number} value - The value to divide.
          * @returns {void}
          */
-        divide: (propertyName, value) => {
-            const num = this.get(propertyName).value;
-            if (typeof num !== 'number' || typeof value !== 'number') return;
-            this.set(propertyName, num / value);
+        divide: (key: string, value: number) => {
+            const currentValue = this.get(key);
+            if (typeof currentValue === 'number') {
+                this.set(key, currentValue / value);
+            }
         }
+    }
+
+    array = {
+        /**
+         * Checks if a value exists in the array.
+         * 
+         * @param {string} key - The key of the array. 
+         * @param {*} value - The value to check.
+         * @returns {boolean} - True if the value exists in the array, false otherwise.
+         */
+        has: (key: string, value: any) => {
+            const currentValue = this.get(key);
+            if (Array.isArray(currentValue)) {
+                return currentValue.includes(value);
+            }
+            return false;
+        },
+        /**
+         * Adds a value to the array.
+         * 
+         * @param {string} key - The key of the array. 
+         * @param {*} value - The value to add.
+         * @returns {void}
+         */
+        push: (key: string, ...value: any[]) => {
+            const currentValue = this.get(key);
+            if (Array.isArray(currentValue)) {
+                this.set(key, [...currentValue, ...value]);
+            }
+        }
+    }
+
+    /**
+     * Gets a value from the database.
+     * 
+     * @param {string} key - The key of the value to get.
+     * @returns {*} - The value of the key.
+     */
+    get(key: string): any {
+        const parser = new Parser(this.fileName);
+        parser.databaseFile();
+        return parser.db[key];
+    }
+
+    /**
+     * Gets a value instance for a key.
+     * 
+     * @param {string} key - The key of the value instance. 
+     * @returns {InstanceValue} - The value instance.
+     */
+    value(key: string): InstanceValue {
+        return new InstanceValue(this, key, this.get(key));
     }
 }
 
-export {arrayContent, Instance, InstanceValue, Parser}
+export { Parser, Instance, InstanceValue };
